@@ -1,0 +1,122 @@
+classDiagram
+direction TB
+class User {
+  +UUID id
+  +String fullName
+  +String email
+  +String phone
+  +float reliabilityScore
+  +AccountStatus status
+  +register()
+  +joinHostel(hostel)
+}
+class Admin {
+  +resolveDispute(dispute)
+  +suspendUser(user)
+  +moderateItem(item)
+}
+class Hostel {
+  +UUID id
+  +String name
+  +Point location
+  +String zone
+  +findNearby(radiusM) Hostel[]
+}
+class Item {
+  +UUID id
+  +String title
+  +Category category
+  +String condition
+  +int maxHours
+  +bool isFree
+  +ItemStatus status
+  +pause()
+  +resume()
+}
+class NeedRequest {
+  +UUID id
+  +String itemName
+  +Category category
+  +int durationHours
+  +int radiusM
+  +RequestStatus status
+  +DateTime expiresAt
+  +post()
+  +cancel()
+}
+class Offer {
+  +UUID id
+  +String message
+  +OfferStatus status
+  +accept() Loan
+  +decline()
+}
+class Loan {
+  +UUID id
+  +LoanStatus status
+  +DateTime dueAt
+  +DateTime handedOverAt
+  +DateTime returnedAt
+  +String handoverPin
+  +approve()
+  +confirmHandover(pin)
+  +markReturned()
+  +confirmReturn(condition)
+  +flagOverdue()
+}
+class ConditionReport {
+  +UUID id
+  +Stage stage
+  +String photoUrl
+  +String notes
+}
+class ExtensionRequest {
+  +UUID id
+  +DateTime newDueAt
+  +RequestStatus status
+}
+class Rating {
+  +UUID id
+  +int score
+  +String comment
+}
+class Dispute {
+  +UUID id
+  +String reason
+  +DisputeStatus status
+  +String resolution
+}
+class Notification {
+  +UUID id
+  +String type
+  +String message
+  +DateTime readAt
+}
+class LoanStatus {
+  <<enumeration>>
+  REQUESTED
+  ACCEPTED
+  HANDED_OVER
+  OVERDUE
+  RETURN_PENDING
+  COMPLETED
+  DISPUTED
+  CANCELLED
+  DECLINED
+}
+User <|-- Admin
+Hostel "1" --> "*" User : houses
+User "1" --> "*" Item : owns
+User "1" --> "*" NeedRequest : posts
+NeedRequest "1" --> "*" Offer : receives
+User "1" --> "*" Offer : makes
+Offer "1" --> "0..1" Loan : creates
+Item "1" --> "*" Loan : lent in
+User "1" --> "*" Loan : borrows
+Loan "1" *-- "0..2" ConditionReport
+Loan "1" *-- "*" ExtensionRequest
+Loan "1" --> "0..2" Rating
+Loan "1" --> "0..1" Dispute
+Admin "1" --> "*" Dispute : resolves
+User "1" --> "*" Notification : receives
+Loan ..> LoanStatus

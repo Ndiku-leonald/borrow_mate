@@ -1,0 +1,110 @@
+@startuml BorrowMate_UseCase
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor Student
+actor Borrower
+actor Lender
+actor Administrator as Admin
+actor "Notification\nScheduler" as Scheduler <<system>>
+
+Borrower --|> Student
+Lender --|> Student
+
+rectangle "BorrowMate System" {
+  ' Shared student use cases
+  usecase "Register / Log in" as UC_Register
+  usecase "Join a hostel / community" as UC_Hostel
+  usecase "Confirm handover" as UC_Handover
+  usecase "Rate other user" as UC_Rate
+  usecase "Report a dispute" as UC_Dispute
+  usecase "View borrowing history" as UC_History
+
+  ' Borrower use cases
+  usecase "Search nearby items" as UC_Search
+  usecase "Post 'I Need This' request" as UC_Need
+  usecase "Request to borrow" as UC_Request
+  usecase "Request extension" as UC_Extend
+  usecase "Cancel request" as UC_Cancel
+  usecase "Mark item returned" as UC_MarkReturn
+
+  ' Lender use cases
+  usecase "Manage item listings" as UC_Listings
+  usecase "Offer on a need request" as UC_Offer
+  usecase "Approve / decline request" as UC_Approve
+  usecase "Approve extension" as UC_ApproveExt
+  usecase "Confirm return & condition" as UC_ConfirmReturn
+
+  ' Shared mechanisms
+  usecase "Verify with handover PIN" as UC_PIN
+  usecase "Attach condition photo" as UC_Photo
+  usecase "Send notification" as UC_Notify
+  usecase "Send due-date reminder" as UC_Remind
+  usecase "Flag loan as overdue" as UC_Overdue
+
+  ' Admin use cases
+  usecase "Review disputes" as UC_ReviewDispute
+  usecase "Moderate listings" as UC_Moderate
+  usecase "Suspend / restore accounts" as UC_Suspend
+  usecase "Manage hostels" as UC_ManageHostels
+  usecase "View community metrics" as UC_Metrics
+}
+
+' Student (inherited by Borrower and Lender)
+Student --> UC_Register
+Student --> UC_Hostel
+Student --> UC_Handover
+Student --> UC_Rate
+Student --> UC_Dispute
+Student --> UC_History
+
+' Borrower
+Borrower --> UC_Search
+Borrower --> UC_Need
+Borrower --> UC_Request
+Borrower --> UC_Extend
+Borrower --> UC_Cancel
+Borrower --> UC_MarkReturn
+
+' Lender
+Lender --> UC_Listings
+Lender --> UC_Offer
+Lender --> UC_Approve
+Lender --> UC_ApproveExt
+Lender --> UC_ConfirmReturn
+
+' Admin
+Admin --> UC_ReviewDispute
+Admin --> UC_Moderate
+Admin --> UC_Suspend
+Admin --> UC_ManageHostels
+Admin --> UC_Metrics
+
+' Scheduler
+Scheduler --> UC_Remind
+Scheduler --> UC_Overdue
+
+' Include / extend relationships
+UC_Request ..> UC_Notify : <<include>>
+UC_Need ..> UC_Notify : <<include>>
+UC_Offer ..> UC_Notify : <<include>>
+UC_Approve ..> UC_Notify : <<include>>
+UC_Handover ..> UC_PIN : <<include>>
+UC_Photo ..> UC_Handover : <<extend>>
+UC_Photo ..> UC_ConfirmReturn : <<extend>>
+UC_Request ..> UC_Search : <<extend>>
+UC_Offer ..> UC_Need : <<extend>>
+UC_MarkReturn ..> UC_ConfirmReturn : <<include>>
+UC_Dispute ..> UC_ConfirmReturn : <<extend>>
+UC_ApproveExt ..> UC_Extend : <<extend>>
+UC_Overdue ..> UC_Notify : <<include>>
+UC_Remind ..> UC_Notify : <<include>>
+
+note right of UC_PIN
+  PIN required only for
+  higher-value items;
+  low-value = one-tap confirm
+end note
+
+@enduml

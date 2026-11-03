@@ -1,0 +1,424 @@
+classDiagram
+direction TB
+
+namespace UsersAndTrust {
+  class University {
+    +UUID id
+    +String name
+    +String emailDomain
+  }
+  class Hostel {
+    +UUID id
+    +String name
+    +Point location
+    +String zone
+    +findNearby(radiusM) Hostel[]
+  }
+  class User {
+    +UUID id
+    +String fullName
+    +String email
+    +String phone
+    +AccountStatus status
+    +float reliabilityScore
+    +TrustLevel trustLevel
+    +ValueTier maxTier
+    +int lendingStreak
+    +String language
+    +bool liteMode
+    +DateTime createdAt
+    +canBorrow(item) bool
+    +activeLoanLimit() int
+  }
+  class Admin {
+    +resolveCase(case)
+    +suspendUser(user)
+    +reviewAppeal(appeal)
+  }
+  class Verification {
+    +UUID id
+    +VerifyMethod method
+    +String studentEmail
+    +VerifyStatus status
+    +verify()
+  }
+  class LenderPreference {
+    +bool sameHostelOnly
+    +int maxRadiusM
+    +int defaultMaxHours
+    +bool freeByDefault
+  }
+  class Vouch {
+    +UUID id
+    +int stakePoints
+    +DateTime createdAt
+    +revoke()
+  }
+  class FraudFlag {
+    +UUID id
+    +String pattern
+    +float riskScore
+    +FlagStatus status
+  }
+  class ModerationCase {
+    +UUID id
+    +CaseStatus status
+    +Evidence[] evidence
+    +String decision
+    +decide()
+  }
+  class Appeal {
+    +UUID id
+    +String reason
+    +AppealStatus status
+  }
+  class HandoverPoint {
+    +UUID id
+    +String name
+    +Point location
+  }
+  class TrustLevel {
+    <<enumeration>>
+    NEW
+    ESTABLISHED
+    TRUSTED
+  }
+}
+
+namespace ItemsAndDiscovery {
+  class Category {
+    +UUID id
+    +String name
+    +String[] synonyms
+    +bool isRestricted
+    +ValueTier minTier
+    +matches(term) bool
+  }
+  class Item {
+    +UUID id
+    +String title
+    +String condition
+    +ValueTier valueTier
+    +int maxHours
+    +bool isFree
+    +ItemStatus status
+    +isAvailable(start, hours) bool
+    +pause()
+    +resume()
+  }
+  class AvailabilityWindow {
+    +DayOfWeek day
+    +Time from
+    +Time to
+  }
+  class Bundle {
+    +UUID id
+    +String name
+    +addItem(item)
+    +isAvailable() bool
+  }
+  class HostelShelf {
+    +UUID id
+    +String name
+    +addItem(item)
+  }
+  class NeedRequest {
+    +UUID id
+    +String itemName
+    +int durationHours
+    +int radiusM
+    +RequestStatus status
+    +DateTime expiresAt
+    +post()
+    +cancel()
+  }
+  class Offer {
+    +UUID id
+    +String message
+    +OfferStatus status
+    +accept() Loan
+    +decline()
+  }
+  class SavedNeed {
+    +UUID id
+    +String keyword
+    +int radiusM
+    +bool active
+    +matches(item) bool
+  }
+  class MatchingEngine {
+    <<service>>
+    +search(term, radius) Item[]
+    +rankOffers(need) Offer[]
+    +rankLenders(need) User[]
+  }
+  class ListingAssistant {
+    <<service>>
+    +suggestFromPhoto(photo) Item
+  }
+  class DemandForecast {
+    +UUID id
+    +DateRange period
+    +int predictedRequests
+    +alertLikelyLenders()
+  }
+  class ItemStatus {
+    <<enumeration>>
+    AVAILABLE
+    PAUSED
+    ON_LOAN
+    REMOVED
+  }
+  class ValueTier {
+    <<enumeration>>
+    LOW
+    MEDIUM
+    HIGH
+  }
+}
+
+namespace LoansAndPayments {
+  class Loan {
+    +UUID id
+    +LoanStatus status
+    +DateTime suggestedDueAt
+    +DateTime dueAt
+    +DateTime handedOverAt
+    +DateTime returnedAt
+    +String handoverPin
+    +approve()
+    +confirmHandover(pin)
+    +quickExtend(hours)
+    +markReturned()
+    +confirmReturn(condition)
+    +flagOverdue()
+  }
+  class ConditionReport {
+    +Stage stage
+    +String photoUrl
+    +String notes
+    +compareWith(other) DamageAssessment
+  }
+  class DamageAssessment {
+    +float damageScore
+    +String summary
+    +bool flagged
+  }
+  class ExtensionRequest {
+    +UUID id
+    +DateTime newDueAt
+    +RequestStatus status
+  }
+  class Waitlist {
+    +UUID id
+    +join(user)
+    +notifyNext()
+  }
+  class WaitlistEntry {
+    +int position
+    +DateTime joinedAt
+  }
+  class BorrowGroup {
+    +UUID id
+    +String name
+    +addMember(user)
+  }
+  class RecurringAgreement {
+    +String schedule
+    +DateTime endsOn
+    +generateNextLoan() Loan
+  }
+  class RentalTerms {
+    +Money fee
+    +Money deposit
+    +Money lateFeePerHour
+    +DateTime acceptedAt
+  }
+  class Payment {
+    +UUID id
+    +Provider provider
+    +Money amount
+    +PaymentType type
+    +PaymentStatus status
+  }
+  class DepositHold {
+    +Money amount
+    +HoldStatus status
+    +release()
+    +capture(amount)
+  }
+  class Rating {
+    +int score
+    +String comment
+  }
+  class Dispute {
+    +UUID id
+    +String reason
+    +DisputeStatus status
+  }
+  class LoanStatus {
+    <<enumeration>>
+    REQUESTED
+    ACCEPTED
+    HANDED_OVER
+    OVERDUE
+    RETURN_PENDING
+    COMPLETED
+    DISPUTED
+    CANCELLED
+    DECLINED
+  }
+}
+
+namespace CommunityAndPlatform {
+  class Badge {
+    +String name
+    +String criteria
+  }
+  class UserBadge {
+    +DateTime awardedAt
+  }
+  class LeaderboardEntry {
+    +Period period
+    +int rank
+    +float score
+  }
+  class ImpactReport {
+    +Period period
+    +Money moneySaved
+    +int loansCompleted
+    +generate()
+  }
+  class ItemTransfer {
+    +TransferType type
+    +DateTime transferredAt
+    +confirm()
+  }
+  class Notification {
+    +NotificationType type
+    +Channel channel
+    +String message
+    +DateTime readAt
+    +send()
+  }
+  class InboundMessage {
+    +Channel channel
+    +String rawText
+    +parseCommand()
+  }
+  class OfflineSyncQueue {
+    <<client>>
+    +enqueue(action)
+    +sync()
+  }
+  class CommunityMetrics {
+    +float fulfillmentRate
+    +int avgResponseMins
+    +float onTimeReturnRate
+    +int disputeCount
+  }
+  class UniversityPartner {
+    +UUID id
+    +String contactEmail
+    +viewImpact()
+  }
+  class CalendarLink {
+    +String provider
+    +String externalId
+    +syncLoan(loan)
+  }
+  class ApiClient {
+    +UUID id
+    +String keyHash
+    +String[] scopes
+    +bool active
+  }
+  class Channel {
+    <<enumeration>>
+    IN_APP
+    PUSH
+    SMS
+    USSD
+    WHATSAPP
+  }
+}
+
+%% Users and trust
+University "1" --> "*" Hostel : has
+User <|-- Admin
+Hostel "1" --> "*" User : houses
+Hostel "1" --> "*" HandoverPoint : offers
+User "1" --> "0..1" Verification
+User "1" *-- "1" LenderPreference
+User "1" --> "*" Vouch : gives
+Vouch "*" --> "1" User : vouches for
+FraudFlag "*" --> "1" User : flags
+FraudFlag "*" --> "0..1" ModerationCase
+Admin "1" --> "*" ModerationCase : handles
+User "1" --> "*" Appeal : files
+Appeal "*" --> "1" ModerationCase
+User ..> TrustLevel
+
+%% Items and discovery
+User "1" --> "*" Item : owns
+Hostel "1" --> "*" HostelShelf
+HostelShelf "1" o-- "*" Item
+User "1" --> "*" HostelShelf : custodian of
+Item "*" --> "1" Category
+Item "1" *-- "*" AvailabilityWindow
+Bundle "1" o-- "2..*" Item
+User "1" --> "*" NeedRequest : posts
+NeedRequest "*" --> "1" Category
+NeedRequest "1" --> "*" Offer : receives
+User "1" --> "*" Offer : makes
+User "1" --> "*" SavedNeed
+MatchingEngine ..> Item
+MatchingEngine ..> Offer
+ListingAssistant ..> Item
+DemandForecast "*" --> "1" Category
+DemandForecast "*" --> "1" Hostel
+Item ..> ItemStatus
+Item ..> ValueTier
+
+%% Loans and payments
+Offer "1" --> "0..1" Loan : creates
+Item "1" --> "*" Loan : lent in
+User "1" --> "*" Loan : borrows
+Loan "*" --> "0..1" HandoverPoint : meets at
+Loan "1" *-- "0..2" ConditionReport
+ConditionReport ..> DamageAssessment
+Loan "1" *-- "*" ExtensionRequest
+Item "1" *-- "0..1" Waitlist
+Waitlist "1" *-- "*" WaitlistEntry
+WaitlistEntry "*" --> "1" User
+BorrowGroup "*" o-- "2..*" User
+BorrowGroup "0..1" --> "*" Loan : shares
+RecurringAgreement "1" --> "*" Loan : generates
+Loan "1" *-- "0..1" RentalTerms
+RentalTerms "1" --> "*" Payment
+RentalTerms "1" --> "0..1" DepositHold
+Loan "1" --> "0..2" Rating
+Loan "1" --> "0..1" Dispute
+Dispute "1" --> "1" ModerationCase
+Loan ..> LoanStatus
+
+%% Community and platform
+User "1" --> "*" UserBadge
+UserBadge "*" --> "1" Badge
+LeaderboardEntry "*" --> "1" Hostel
+LeaderboardEntry "*" --> "0..1" User
+ImpactReport "*" --> "1" Hostel
+ItemTransfer "*" --> "1" Item
+ItemTransfer "*" --> "0..1" HostelShelf
+User "1" --> "*" Notification : receives
+Notification ..> Channel
+InboundMessage ..> NeedRequest : creates
+OfflineSyncQueue ..> Loan : syncs
+CommunityMetrics "*" --> "1" Hostel
+UniversityPartner "*" --> "1" University
+UniversityPartner ..> ImpactReport : views
+User "1" --> "0..1" CalendarLink
+ApiClient "*" --> "1" UniversityPartner : issued to
+
+note for Item "Constraint: at most one active Loan per Item"
+note for User "canBorrow: status ACTIVE, item tier within maxTier, under activeLoanLimit, no open overdue loans"
