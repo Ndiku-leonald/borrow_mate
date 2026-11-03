@@ -6,7 +6,7 @@ BorrowMate is a peer-to-peer borrowing system for university students. Students 
 
 This repository contains a working **command-line application written in Python using object-oriented programming**. It is a group project at Uganda Christian University (UCU), Mukono.
 
-![Python](https://img.shields.io/badge/python-3.9%2B-blue) ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Tests](https://img.shields.io/badge/tests-31%20passing-brightgreen)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue) ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Tests](https://img.shields.io/badge/tests-32%20passing-brightgreen)
 
 ---
 
@@ -243,10 +243,12 @@ borrow_mate/
 │   │   ├── inventory.py        # Inventory, ItemFactory
 │   │   ├── loan_manager.py     # eligibility, conflicts, overdue, Conflict
 │   │   └── community.py        # facade that wires everything
-│   └── cli/
-│       ├── display.py          # tables and countdowns
-│       └── app.py              # BorrowMateCLI menu
-├── tests/                      # 31 unit tests (unittest, no extra packages)
+│   ├── cli/
+│   │   ├── display.py          # tables and countdowns
+│   │   ├── plugin.py           # MenuPlugin base class + auto-loader
+│   │   └── app.py              # BorrowMateCLI menu
+│   └── plugins/                # each new feature = one file here
+├── tests/                      # unit tests (unittest, no extra packages)
 └── docs/design/                # UML diagrams (PlantUML + Mermaid)
 ```
 
@@ -271,6 +273,20 @@ The tests cover the OOP rules (abstract classes cannot be created, polymorphic a
 3. Make **small commits** with clear messages (`feat:`, `fix:`, `test:`, `docs:`, `refactor:`).
 4. Run the tests before pushing.
 5. Open a pull request into `main`; at least one teammate reviews it before merging.
+
+### Adding a feature without merge conflicts
+
+New features plug into the menu instead of editing `cli/app.py`. Create a file in `borrowmate/plugins/` with a `MenuPlugin` subclass; it is found and loaded automatically:
+
+```python
+from borrowmate.cli.plugin import MenuPlugin
+
+class HelloPlugin(MenuPlugin):
+    def menu_entries(self, cli):
+        return [("Say hello", lambda: cli.say(f"Hello {cli.user.full_name}"))]
+```
+
+Because each feature lives in its own new files, teammates' pull requests do not touch the same lines.
 
 ## Roadmap
 
