@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Callable, Dict, List, Optional, Tuple
 
 from borrowmate.cli.display import countdown, distance, heading, table, when
+from borrowmate.cli.plugin import MenuPlugin
 from borrowmate.exceptions import BorrowMateError, ValidationError
 from borrowmate.models.enums import Condition, ItemStatus
 from borrowmate.models.item import Item
@@ -24,10 +25,12 @@ class BorrowMateCLI:
 
     def __init__(self, community: Community,
                  input_fn: Callable[[str], str] = input,
-                 output_fn: Callable[[str], None] = print):
+                 output_fn: Callable[[str], None] = print,
+                 plugins: Optional[List[MenuPlugin]] = None):
         self._c = community
         self._ask = input_fn
         self._say = output_fn
+        self._plugins = plugins or []
         self._user: Optional[Person] = None
         self._running = False
 
@@ -83,6 +86,8 @@ class BorrowMateCLI:
         entries.append(("Notifications", self.show_notifications))
         if isinstance(self._c.clock, SimulatedClock):
             entries.append(("Move demo clock forward", self.advance_clock))
+        for plugin in sorted(self._plugins, key=lambda p: getattr(p, "order", 100)):
+            entries.extend(plugin.menu_entries(self))
         entries.append(("Switch user", self._login))
         menu = {str(i): entry for i, entry in enumerate(entries, start=1)}
         menu["0"] = ("Exit", self._quit)
