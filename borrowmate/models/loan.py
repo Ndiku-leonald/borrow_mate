@@ -25,7 +25,7 @@ _TRANSITIONS = {
     LoanStatus.REQUESTED: {LoanStatus.ACCEPTED, LoanStatus.DECLINED, LoanStatus.CANCELLED},
     LoanStatus.ACCEPTED: {LoanStatus.HANDED_OVER, LoanStatus.CANCELLED},
     LoanStatus.HANDED_OVER: {LoanStatus.RETURNED, LoanStatus.OVERDUE, LoanStatus.DISPUTED},
-    LoanStatus.OVERDUE: {LoanStatus.RETURNED, LoanStatus.DISPUTED},
+    LoanStatus.OVERDUE: {LoanStatus.RETURNED, LoanStatus.DISPUTED, LoanStatus.HANDED_OVER},
     LoanStatus.DISPUTED: {LoanStatus.RETURNED},
     LoanStatus.RETURNED: set(),
     LoanStatus.DECLINED: set(),
@@ -141,6 +141,22 @@ class Loan:
         self._returned_at = at
         self._condition_in = condition
         return at <= self._due_at
+
+    def extend_to(self, new_due: datetime, now: datetime) -> None:
+        """Move the return deadline later (after the owner approves).
+
+        An overdue loan whose new deadline is in the future goes back to
+        HANDED_OVER, so the borrower is no longer treated as late.
+        """
+        if self._status not in (LoanStatus.HANDED_OVER, LoanStatus.OVERDUE):
+            raise InvalidTransitionError(
+                f"Only a loan that is out with the borrower can be extended "
+                f"(loan {self._id} is {self._status.value}).")
+        if new_due <= self._due_at:
+            raise ValidationError("The new return time must be later than the current one.")
+        self._due_at = new_due
+        if self._status == LoanStatus.OVERDUE and new_due > now:
+            self._move_to(LoanStatus.HANDED_OVER)
 
     # --- queries ------------------------------------------------------------
     def overlaps(self, other: "Loan") -> bool:
