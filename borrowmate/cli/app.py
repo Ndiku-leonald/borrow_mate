@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Callable, Dict, List, Optional, Tuple
 
 from borrowmate.cli.display import countdown, distance, heading, table, when
+from borrowmate.cli.plugin import MenuPlugin, load_plugins
 from borrowmate.exceptions import BorrowMateError, ValidationError
 from borrowmate.models.enums import Condition, ItemStatus
 from borrowmate.models.item import Item
@@ -24,12 +25,29 @@ class BorrowMateCLI:
 
     def __init__(self, community: Community,
                  input_fn: Callable[[str], str] = input,
-                 output_fn: Callable[[str], None] = print):
+                 output_fn: Callable[[str], None] = print,
+                 plugins: Optional[List[MenuPlugin]] = None):
         self._c = community
         self._ask = input_fn
         self._say = output_fn
         self._user: Optional[Person] = None
         self._running = False
+        self._plugins = load_plugins(community) if plugins is None else plugins
+
+    # --- public helpers for plugins ----------------------------------------
+    @property
+    def community(self) -> Community:
+        return self._c
+
+    @property
+    def user(self) -> Optional[Person]:
+        return self._user
+
+    def ask(self, prompt: str) -> str:
+        return self._ask(prompt)
+
+    def say(self, text: str) -> None:
+        self._say(text)
 
     # --- main loop ---------------------------------------------------------
     def run(self) -> None:
@@ -38,6 +56,8 @@ class BorrowMateCLI:
         self._login()
         while self._running:
             self._c.loans.refresh_overdue()
+            for plugin in self._plugins:
+                plugin.on_tick(self._c.clock.now())
             menu = self._menu()
             self._say(heading(f"Menu - {self._user}  |  now {when(self._c.clock.now())}"))
             for key, (label, _) in menu.items():
@@ -80,6 +100,8 @@ class BorrowMateCLI:
                 ("Disputed loans", self.show_disputes),
                 ("Suspend / restore a user", self.toggle_suspension),
             ]
+        for plugin in self._plugins:
+            entries += plugin.menu_entries(self)
         entries.append(("Notifications", self.show_notifications))
         if isinstance(self._c.clock, SimulatedClock):
             entries.append(("Move demo clock forward", self.advance_clock))

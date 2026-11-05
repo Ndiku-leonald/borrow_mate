@@ -40,5 +40,21 @@ class CliTests(unittest.TestCase):
         self.assertEqual(c.loans.overdue_loans(), [])
 
 
+class PluginTests(unittest.TestCase):
+    def test_plugin_entries_appear_in_menu_and_run(self):
+        from borrowmate.cli.plugin import MenuPlugin
+
+        class HelloPlugin(MenuPlugin):
+            def menu_entries(self, cli):
+                return [("Say hello", lambda: cli.say(f"Hello {cli.user.full_name}"))]
+
+        community = build_demo_community()
+        output = []
+        inputs = iter(["U001", "16", "0"])   # option 16 = first plugin entry for students
+        BorrowMateCLI(community, input_fn=lambda _: next(inputs), output_fn=output.append,
+                      plugins=[HelloPlugin(community)]).run()
+        self.assertIn("Hello Leo Ndikuryayo", "\n".join(output))
+
+
 if __name__ == "__main__":
     unittest.main()
