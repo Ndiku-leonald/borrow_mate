@@ -16,3 +16,4 @@ Thumbs.db
 # Local data
 *.log
 data/*.json
+/reports/
